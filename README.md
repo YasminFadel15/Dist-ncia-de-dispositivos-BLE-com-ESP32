@@ -70,4 +70,4 @@ allow_anonymous true
   - Como estamos usando ```allow_anonymous true``` não é necessário usuário e senha.
   - Clique em Connect.
   - Inscreva-se no tópico para monitorar os dados enviados pelo ESP32.
-  ![MQTT Explorer]([https://docs.espressif.com/projects/esp-idf/en/stable/esp32/_images/esp32-devkitC-v4-pinout.png](https://energytalk.co.za/uploads/default/original/2X/f/f2fca0206e10bd378f7e4bbcc488debe2f8de814.jpeg)
+  ![MQTT Explorer]([https://docs.espressif.com/projects/esp-idf/en/stable/esp32/_images/esp32-devkitC-v4-pinout.png](https://energytalk.co.za/uploads/default/original/2X/f/f2fca0206e10bd378f7e4bbcc488debe2f8de814.jpeg))
