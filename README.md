@@ -3,7 +3,7 @@
 
 ## Objetivo
 
-O projeto visa reconhecer dispositivos BLE (Bluetooth Low Energy) em um raio de 10 metros utilizando a placa ESP32 e estimar a distância dos mesmos em relação à placa.
+O projeto visa reconhecer dispositivos BLE (Bluetooth Low Energy) em um raio de 10 metros utilizando a placa ESP32 e estimar a distância destes em relação à placa.
 
 #### Observações: Este projeto foi implementado no Linux, utilizando a distribuição Fedora versão 23.
 
