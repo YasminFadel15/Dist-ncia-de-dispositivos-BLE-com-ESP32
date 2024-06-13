@@ -51,8 +51,8 @@ allow_anonymous true
     - Parar o Mosquitto: ```sudo systemctl stop mosquitto``` 
     - Verificar logs do Mosquitto: ```sudo journalctl -u mosquitto```
     
-### MQTT X
-- Download: Baixe o MQTT X no site oficial.
+### MQTT Explorer
+- Download: Baixe o MQTT Explorer no [Site Oficial](https://mqtt-explorer.com/)
 
 ## Desenvolvimento
 - Carregar o código na ESP32:
