@@ -56,15 +56,18 @@ allow_anonymous true
 
 ## Desenvolvimento
 - Carregar o código na ESP32:
-        Abra o Arduino IDE.
-        Conecte a ESP32 ao seu computador via USB.
-        Selecione a placa correta em Tools > Board > ESP32 Dev Module.
-        Selecione a porta correta em Tools > Port.
-        Carregue o código.
+  - Abra o Arduino IDE.
+  - Conecte a ESP32 ao seu computador via USB.
+  - Selecione a placa correta em Tools > Board > ESP32 Dev Module.
+  - Selecione a porta correta em Tools > Port.
+  - Carregue o código.
 
-    Configuração do Mosquitto:
-        Certifique-se de que o serviço Mosquitto está rodando.
+- Configuração do Mosquitto:
+  - Certifique-se de que o serviço Mosquitto está rodando.
 
-    Utilização do MQTT X:
-        Configure o cliente MQTT X para se conectar ao broker Mosquitto.
-        Subscrição nos tópicos relevantes para monitorar os dados enviados pela ESP32.
+- Utilização do MQTT Explorer:
+  - Informe o nome, o host, o protocolo e porta.
+  - Como estamos usando ```allow_anonymous true``` não é necessário usuário e senha.
+  - Clique em Connect.
+  - Inscreva-se no tópico para monitorar os dados enviados pelo ESP32.
+  ![MQTT Explorer]([https://docs.espressif.com/projects/esp-idf/en/stable/esp32/_images/esp32-devkitC-v4-pinout.png](https://energytalk.co.za/uploads/default/original/2X/f/f2fca0206e10bd378f7e4bbcc488debe2f8de814.jpeg)
