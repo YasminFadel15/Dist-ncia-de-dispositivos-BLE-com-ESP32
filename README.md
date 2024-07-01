@@ -11,7 +11,7 @@ O projeto visa reconhecer dispositivos BLE (Bluetooth Low Energy) em um raio de 
 
 - Arduino IDE: Para desenvolvimento e upload do código na placa ESP32.
 - Broker Mosquitto: Para comunicação via protocolo MQTT.
-- MQTT X: Ferramenta cliente para testar e monitorar mensagens MQTT.
+- MQTT Explorer: Ferramenta cliente para testar e monitorar mensagens MQTT.
 - Linguagem: C++
 
 ## Informações sobre o ESP32
