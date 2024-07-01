@@ -5,11 +5,11 @@
 #include <BLEServer.h>
 #include <BLEScan.h>
 
-const char* ssid = "nome_da_rede";
+const char* ssid = "nome_rede";
 const char* password = "senha";
-const char* mqtt_server = "ip_da_rede";
+const char* mqtt_server = "endereco_ip";
 const int mqtt_port = 1883;
-const char* mqtt_topic = "nome_do_tópico";
+const char* mqtt_topic = "nome_topico";
 
 const int maxDistance = 10; // Distância máxima em metros
 const int rssiRef = -69; // RSSI de referência
@@ -169,8 +169,9 @@ void loop() {
 
     // Verifica se a distância é menor ou igual a 10 metros
     if (distanceMovingAverage <= maxDistance || distanceMedian <= maxDistance) {
-      // Monta a mensagem MQTT com nome do dispositivo e distância
+      // Monta a mensagem MQTT com nome do dispositivo, RSSI e distância
       String msg = "Dispositivo " + deviceName + " (" + deviceAddress + ")\n";
+      msg += "RSSI: " + String(rssi) + " dBm\n";
       msg += "Distância (Média Móvel): " + String(distanceMovingAverage, 2) + " metros\n";
       msg += "Distância (Mediana): " + String(distanceMedian, 2) + " metros";
       mqttClient.publish(mqtt_topic, msg.c_str());
