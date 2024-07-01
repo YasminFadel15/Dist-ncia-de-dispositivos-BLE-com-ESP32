@@ -1,0 +1,182 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLEScan.h>
+
+const char* ssid = "nome_da_rede";
+const char* password = "senha";
+const char* mqtt_server = "ip_da_rede";
+const int mqtt_port = 1883;
+const char* mqtt_topic = "nome_do_tópico";
+
+const int maxDistance = 10; // Distância máxima em metros
+const int rssiRef = -69; // RSSI de referência
+const float n = 3.5; // Exponente da fórmula de distância
+
+const int filterSize = 5; // Tamanho do filtro
+int rssiBuffer[filterSize];
+int bufferIndex = 0;
+
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+BLEScan* pBLEScan;
+
+void setup() {
+  Serial.begin(9600);
+  configurarWiFi();
+
+  Serial.println("Informações de Conexão:");
+  Serial.print("IP do ESP32: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("IP do Broker: ");
+  Serial.println(mqtt_server);
+  Serial.print("Porta do Broker: ");
+  Serial.println(mqtt_port);
+
+  mqttClient.setServer(mqtt_server, mqtt_port);
+  mqttClient.setCallback(mensagemRecebida);
+
+  BLEDevice::init("");
+  pBLEScan = BLEDevice::getScan(); // Cria o objeto de scan BLE
+  pBLEScan->setActiveScan(true); // Define para scan ativo
+
+  // Inicializar o buffer de RSSI
+  for (int i = 0; i < filterSize; i++) {
+    rssiBuffer[i] = 0;
+  }
+}
+
+void configurarWiFi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Conectando-se a ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi conectado");
+  Serial.println("Endereço IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+void mensagemRecebida(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Mensagem recebida [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (unsigned int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+}
+
+void reconectar() {
+  while (!mqttClient.connected()) {
+    Serial.print("Tentando conexão MQTT...");
+    if (mqttClient.connect("ESP32Client")) {
+      Serial.println("conectado");
+      mqttClient.subscribe(mqtt_topic);
+    } else {
+      Serial.print("falha, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" tentando novamente em 5 segundos");
+      delay(5000);
+    }
+  }
+}
+
+// Função para calcular a média móvel do RSSI
+int calcularMediaMovel(int newReading) {
+  rssiBuffer[bufferIndex] = newReading;
+  bufferIndex = (bufferIndex + 1) % filterSize;
+
+  int sum = 0;
+  for (int i = 0; i < filterSize; i++) {
+    sum += rssiBuffer[i];
+  }
+  return sum / filterSize;
+}
+
+// Função para calcular a mediana do RSSI
+int calcularMediana(int newReading) {
+  rssiBuffer[bufferIndex] = newReading;
+  bufferIndex = (bufferIndex + 1) % filterSize;
+
+  // Copia o rssiBuffer para um array temporário para ordenar
+  int temp[filterSize];
+  memcpy(temp, rssiBuffer, sizeof(rssiBuffer));
+
+  // Ordena o array temporário
+  for (int i = 0; i < filterSize - 1; i++) {
+    for (int j = i + 1; j < filterSize; j++) {
+      if (temp[i] > temp[j]) {
+        int tempValor = temp[i];
+        temp[i] = temp[j];
+        temp[j] = tempValor;
+      }
+    }
+  }
+
+  // Retorna a mediana
+  if (filterSize % 2 == 0) {
+    return (temp[filterSize / 2 - 1] + temp[filterSize / 2]) / 2;
+  } else {
+    return temp[filterSize / 2];
+  }
+}
+
+void loop() {
+  if (!mqttClient.connected()) {
+    reconectar();
+  }
+  mqttClient.loop(); // Mantém a conexão MQTT ativa
+
+  // Realiza uma varredura BLE
+  BLEScanResults foundDevices = *pBLEScan->start(10, false);
+
+  // Envia mensagem MQTT com a quantidade de dispositivos encontrados e informações de conexão
+  char msg[150];
+  sprintf(msg, "Dispositivos encontrados: %d\nIP do ESP32: %s\nIP do Broker: %s\nPorta do Broker: %d", 
+          foundDevices.getCount(), WiFi.localIP().toString().c_str(), mqtt_server, mqtt_port);
+  mqttClient.publish(mqtt_topic, msg);
+
+  // Itera sobre os dispositivos encontrados
+  for (int i = 0; i < foundDevices.getCount(); i++) {
+    BLEAdvertisedDevice device = foundDevices.getDevice(i);
+
+    // Captura o nome e o endereço MAC do dispositivo BLE
+    String deviceName = String(device.getName().c_str());
+    String deviceAddress = String(device.getAddress().toString().c_str());
+
+    // Captura o RSSI do dispositivo
+    int rssi = device.getRSSI();
+
+    // Calcula a média móvel e a mediana do RSSI
+    int smoothedRSSI = calcularMediaMovel(rssi);
+    int medianRSSI = calcularMediana(rssi);
+
+    // Calcula a distância do dispositivo usando a média móvel
+    float distanceMovingAverage = pow(10, (rssiRef - smoothedRSSI) / (10 * n));
+    // Calcula a distância do dispositivo usando a mediana
+    float distanceMedian = pow(10, (rssiRef - medianRSSI) / (10 * n));
+
+    // Verifica se a distância é menor ou igual a 10 metros
+    if (distanceMovingAverage <= maxDistance || distanceMedian <= maxDistance) {
+      // Monta a mensagem MQTT com nome do dispositivo e distância
+      String msg = "Dispositivo " + deviceName + " (" + deviceAddress + ")\n";
+      msg += "Distância (Média Móvel): " + String(distanceMovingAverage, 2) + " metros\n";
+      msg += "Distância (Mediana): " + String(distanceMedian, 2) + " metros";
+      mqttClient.publish(mqtt_topic, msg.c_str());
+    }
+  }
+
+  // Aguarda 5 segundos antes de realizar a próxima varredura
+  delay(5000);
+}
